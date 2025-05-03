@@ -1,0 +1,111 @@
+.post-detail-container {
+  padding: 20px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.post-header {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.post-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.post-status {
+  font-size: 12px;
+  color: #ff9800;
+  padding: 2px 6px;
+  background-color: #fff8e1;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+.post-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.post-author {
+  font-size: 14px;
+  color: #1677ff;
+  margin-right: 15px;
+}
+
+.post-time {
+  font-size: 14px;
+  color: #999;
+}
+
+.post-content {
+  margin-bottom: 30px;
+}
+
+.content-text {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+  display: block;
+}
+
+.image-list {
+  margin-top: 20px;
+}
+
+.content-image {
+  width: 100%;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+.post-actions {
+  display: flex;
+  padding: 20px 0;
+}
+
+.like-button {
+  margin-right: 15px;
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 14px;
+  line-height: 32px;
+  height: 32px;
+  min-width: 80px;
+  border-radius: 16px;
+  padding: 0 15px;
+}
+
+.like-button.liked {
+  background-color: #e6f7ff;
+  color: #1677ff;
+}
+
+.edit-button {
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 14px;
+  line-height: 32px;
+  height: 32px;
+  min-width: 80px;
+  border-radius: 16px;
+  padding: 0 15px;
+}
+
+.loading, .error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  font-size: 16px;
+  color: #999;
+} 

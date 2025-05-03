@@ -1,0 +1,48 @@
+# 依赖包
+node_modules/
+package-lock.json
+yarn.lock
+
+# 构建产物
+dist/
+.swc/
+.temp/
+.rn_temp/
+
+# 本地环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 编辑器和IDE文件
+.DS_Store
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# 日志文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# 临时文件
+.tmp/
+*.swp
+*.swo
+
+# Taro相关
+.taro-lock/
+.taro_cache/
+
+# 项目特定文件
+coverage/
+.jest/
+
+# 其他
+.history/
+*.log
+*.bak

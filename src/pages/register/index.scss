@@ -1,0 +1,88 @@
+.register-container {
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  height: 100vh;
+}
+
+.register-header {
+  margin: 60px 0 50px;
+}
+
+.register-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.register-subtitle {
+  font-size: 14px;
+  color: #999;
+  display: block;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-item {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 0 15px;
+  font-size: 14px;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.register-button {
+  margin-top: 20px;
+  height: 44px;
+  background-color: #1677ff;
+  color: #fff;
+  font-size: 16px;
+  border-radius: 6px;
+  font-weight: normal;
+}
+
+.register-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.login-link {
+  font-size: 14px;
+  color: #1677ff;
+  display: inline-block;
+  padding: 5px;
+}
+
+.demo-account {
+  margin-top: 40px;
+  text-align: center;
+  background-color: #f0f9ff;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.demo-tip {
+  font-size: 14px;
+  color: #1677ff;
+  display: block;
+  margin-bottom: 5px;
+} 

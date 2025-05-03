@@ -1,2 +1,173 @@
-# travel-diary-mobile
-Taro 移动端代码（微信小程序 / H5）
+# 旅行日记移动端应用
+
+## 项目概述
+
+旅行日记移动端应用是一款基于Taro框架开发的跨平台移动应用，支持用户浏览、发布和管理旅行游记。该应用作为旅行日记平台的移动端入口，提供了良好的用户体验和丰富的功能，让用户随时随地记录和分享旅行见闻。
+
+## 功能特点
+
+### 核心功能
+- **用户认证**：支持用户注册、登录和身份验证
+- **游记浏览**：
+  - 浏览已审核通过的游记列表
+  - 支持游记搜索和分类查看
+  - 查看游记详情和评论
+- **游记发布**：
+  - 支持文本、图片内容发布
+  - 支持草稿保存功能
+  - 发布后等待管理员审核
+- **个人中心**：
+  - 管理个人信息和已发布的游记
+  - 查看游记审核状态
+  - 修改和删除个人游记
+- **社交互动**：支持对游记进行点赞和评论
+
+### 多平台支持
+- **微信小程序**：无需安装，扫码即用
+- **H5网页**：适配移动设备的网页版本
+- **支付宝小程序**：在支付宝中使用的小程序版本
+
+## 技术栈
+
+- **前端框架**：Taro 4.x + React 18
+- **UI组件**：Taro 内置组件
+- **状态管理**：React Hooks
+- **样式处理**：Sass/SCSS
+- **模拟数据**：本地Mock数据
+
+## 安装与运行
+
+### 环境要求
+- Node.js 14+
+- npm 6+ 或 yarn 1.22+
+
+### 安装步骤
+
+1. 克隆项目仓库
+```bash
+git clone https://github.com/damon-ldl/travel-diary-mobile.git
+cd travel-diary-mobile
+```
+
+2. 安装依赖
+```bash
+# 使用npm
+npm install
+
+# 或使用yarn
+yarn
+```
+
+3. 运行项目
+```bash
+# H5端开发
+npm run dev:h5
+
+# 微信小程序开发
+npm run dev:weapp
+
+# 支付宝小程序开发
+npm run dev:alipay
+```
+
+4. 打包构建
+```bash
+# H5端打包
+npm run build:h5
+
+# 微信小程序打包
+npm run build:weapp
+```
+
+## 项目预览
+
+### 微信小程序
+1. 安装[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)
+2. 运行 `npm run dev:weapp` 命令
+3. 打开微信开发者工具，导入项目（项目路径为 `dist` 目录）
+4. 可使用测试账号登录:
+   - 用户名: admin
+   - 密码: admin
+
+### H5端
+1. 运行 `npm run dev:h5` 命令
+2. 在浏览器中访问 `http://localhost:10086`
+3. 可使用测试账号登录:
+   - 用户名: admin
+   - 密码: admin
+
+## 项目结构
+
+```
+travel-diary-mobile/
+├── config/               # 项目配置文件
+├── src/
+│   ├── assets/           # 静态资源
+│   ├── components/       # 公共组件
+│   │   ├── PostCard/     # 游记卡片组件
+│   │   ├── ImagePicker/  # 图片选择器组件
+│   │   └── Loading/      # 加载组件
+│   ├── constants/        # 常量定义
+│   ├── pages/            # 页面组件
+│   │   ├── index/        # 首页
+│   │   ├── login/        # 登录页
+│   │   ├── register/     # 注册页
+│   │   ├── post/         # 游记相关页面
+│   │   │   ├── list.jsx  # 游记列表
+│   │   │   ├── detail.jsx # 游记详情
+│   │   │   └── create.jsx # 游记发布
+│   │   └── my/           # 个人中心
+│   ├── utils/            # 工具函数
+│   │   ├── request.js    # 请求工具
+│   │   ├── auth.js       # 认证相关工具
+│   │   └── mockData.js   # 模拟数据
+│   ├── app.js            # 应用入口
+│   ├── app.scss          # 全局样式
+│   └── app.config.js     # 应用配置
+└── package.json          # 项目依赖
+```
+
+## 开发说明
+
+### 模拟数据
+
+目前应用使用本地模拟数据进行开发测试，模拟数据位于 `src/utils/mockData.js` 文件中。
+
+### 接口说明
+
+实际生产环境中，应与后端API配合使用。后端API规范如下：
+
+- `POST /api/auth/register`：用户注册
+- `POST /api/auth/login`：用户登录
+- `GET /api/posts`：获取游记列表
+- `GET /api/posts/{postId}`：获取游记详情
+- `POST /api/posts`：发布新游记
+- `PUT /api/posts/{postId}`：更新游记
+- `POST /api/posts/{postId}/like`：点赞/取消点赞
+
+## 后续开发计划
+
+### 近期计划
+1. **接入真实API**：替换当前的模拟数据，连接到真实的后端服务
+2. **完善游记管理**：优化游记的发布和管理功能，支持草稿箱
+3. **增强社交互动**：完善评论系统，增加用户互动功能
+4. **优化用户体验**：改进UI界面，提升用户体验
+
+### 中长期计划
+1. **位置服务集成**：集成地图服务，支持位置标记和轨迹记录
+2. **离线功能**：支持离线编辑和同步功能
+3. **多媒体增强**：支持视频和音频内容的发布
+4. **社区功能**：建立用户社区，支持关注和私信功能
+5. **推荐系统**：基于用户喜好的个性化推荐
+
+## 许可证
+
+此项目采用 MIT 许可证 - 详细信息请参阅 [LICENSE](LICENSE) 文件。
+
+## 联系方式
+
+项目维护者：[黎栋梁] - [cassielldl@gmail.com](mailto:cassielldl@gmail.com)
+
+---
+
+© 2025 旅行日记移动端应用. 保留所有权利。 
