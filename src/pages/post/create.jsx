@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Input, Textarea, Button, Image } from '@tarojs/components';
+import { View, Text, Input, Textarea, Button, Image, Video } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { post, get, put, isLoggedIn } from '../../utils/request';
-import { POST_URLS } from '../../constants/api';
+import { post, get, put, isLoggedIn, getToken } from '../../utils/request';
+import { POST_URLS, BASE_URL } from '../../constants/api';
 import './create.scss';
 
 const CreatePost = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [images, setImages] = useState([]);
+  const [videoUrl, setVideoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [postId, setPostId] = useState('');
@@ -41,6 +42,7 @@ const CreatePost = () => {
         setTitle(res.title || '');
         setContent(res.content || '');
         setImages(res.images || []);
+        setVideoUrl(res.videoUrl || '');
       }
     } catch (error) {
       Taro.showToast({
@@ -69,6 +71,8 @@ const CreatePost = () => {
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: (res) => {
+        console.log('选择图片成功:', res.tempFilePaths);
+        // 不再过滤图片格式，接受所有选择的图片
         setImages([...images, ...res.tempFilePaths]);
       },
     });
@@ -87,6 +91,25 @@ const CreatePost = () => {
       current,
       urls: images,
     });
+  };
+  
+  // 选择视频
+  const handleChooseVideo = () => {
+    Taro.chooseVideo({
+      sourceType: ['album', 'camera'],
+      maxDuration: 60,
+      camera: 'back',
+      success: (res) => {
+        console.log('选择视频成功:', res.tempFilePath);
+        // 不再检查视频格式，直接接受
+        setVideoUrl(res.tempFilePath);
+      }
+    });
+  };
+  
+  // 移除视频
+  const handleRemoveVideo = () => {
+    setVideoUrl('');
   };
 
   // 提交游记
@@ -107,18 +130,153 @@ const CreatePost = () => {
       });
       return;
     }
+    
+    if (images.length === 0) {
+      Taro.showToast({
+        title: '请至少上传一张图片',
+        icon: 'none',
+      });
+      return;
+    }
+    
+    // 检查登录状态
+    if (!isLoggedIn()) {
+      Taro.showToast({
+        title: '请先登录',
+        icon: 'none',
+      });
+      Taro.navigateTo({
+        url: '/pages/login/index'
+      });
+      return;
+    }
 
     try {
       setLoading(true);
 
-      // 准备上传的数据
-      // 注意：实际上传图片应该先上传到服务器，获取URL后再提交
-      // 这里简化处理，假设直接提交图片路径
+      // 改为实际上传图片，不使用测试模式
+      const isTestMode = false; 
+      
+      // 准备图片数据
+      let uploadedImages = [];
+      
+      if (isTestMode) {
+        // 测试模式：为每张本地图片生成模拟URL
+        uploadedImages = images.map((img, index) => 
+          `https://example.com/mock-image-${index}.jpg`);
+        console.log('测试模式：使用模拟图片URL', uploadedImages);
+      } else {
+        // 生产模式：实际上传图片
+        for (let i = 0; i < images.length; i++) {
+          try {
+            console.log(`开始上传第${i+1}张图片...`, images[i]);
+            const uploadRes = await Taro.uploadFile({
+              url: `${BASE_URL}/upload`,
+              filePath: images[i],
+              name: 'files',
+              header: {
+                'Authorization': `Bearer ${getToken()}`
+              },
+              formData: {
+                type: 'image'
+              }
+            });
+            
+            console.log('图片上传响应:', uploadRes);
+            
+            if (uploadRes.statusCode === 200) {
+              const data = JSON.parse(uploadRes.data);
+              console.log('解析上传响应:', data);
+              // 服务器返回的是filePaths数组，我们取第一个
+              if (data.filePaths && data.filePaths.length > 0) {
+                uploadedImages.push(data.filePaths[0]);
+              }
+            } else {
+              throw new Error(`图片上传失败: ${uploadRes.statusCode}`);
+            }
+          } catch (error) {
+            console.error('上传图片失败:', error);
+            Taro.showToast({
+              title: '图片上传失败，请重试',
+              icon: 'none',
+            });
+            setLoading(false);
+            return;
+          }
+        }
+        console.log('所有图片上传完成:', uploadedImages);
+      }
+      
+      // 确保有图片数据
+      if (uploadedImages.length === 0) {
+        Taro.showToast({
+          title: '无法处理图片，请重试',
+          icon: 'none',
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // 处理视频（测试模式使用模拟URL）
+      let videoUrlOnServer = null;
+      if (videoUrl) {
+        if (isTestMode) {
+          videoUrlOnServer = 'https://example.com/mock-video.mp4';
+          console.log('测试模式：使用模拟视频URL', videoUrlOnServer);
+        } else {
+          try {
+            console.log('开始上传视频...', videoUrl);
+            const uploadRes = await Taro.uploadFile({
+              url: `${BASE_URL}/upload`,
+              filePath: videoUrl,
+              name: 'files',
+              header: {
+                'Authorization': `Bearer ${getToken()}`
+              },
+              formData: {
+                type: 'video'
+              }
+            });
+            
+            console.log('视频上传响应:', uploadRes);
+            
+            if (uploadRes.statusCode === 200) {
+              const data = JSON.parse(uploadRes.data);
+              console.log('解析视频上传响应:', data);
+              // 服务器返回的是filePaths数组，我们取第一个
+              if (data.filePaths && data.filePaths.length > 0) {
+                videoUrlOnServer = data.filePaths[0];
+              }
+            } else {
+              console.error('视频上传失败:', uploadRes);
+              // 视频上传失败不阻止整个过程，只是不包含视频
+              Taro.showToast({
+                title: '视频上传失败，将不包含视频',
+                icon: 'none',
+                duration: 2000
+              });
+            }
+          } catch (error) {
+            console.error('上传视频失败:', error);
+            // 视频上传失败不阻止整个过程
+            Taro.showToast({
+              title: '视频上传失败，将不包含视频',
+              icon: 'none',
+              duration: 2000
+            });
+          }
+        }
+      }
+      
+      // 准备提交的数据
       const postData = {
         title,
         content,
-        images,
+        images: uploadedImages,
+        video: videoUrlOnServer
       };
+
+      console.log('准备提交的游记数据:', postData);
 
       let res;
       if (isEdit) {
@@ -149,6 +307,7 @@ const CreatePost = () => {
         }
       }, 1500);
     } catch (error) {
+      console.error('提交游记失败:', error);
       Taro.showToast({
         title: error.message || '操作失败，请稍后再试',
         icon: 'none',
@@ -205,6 +364,32 @@ const CreatePost = () => {
           {images.length < 9 && (
             <View className="add-image" onClick={handleChooseImage}>
               <Text className="add-icon">+</Text>
+            </View>
+          )}
+        </View>
+      </View>
+      
+      <View className="form-item">
+        <Text className="form-label">视频(可选)</Text>
+        <View className="video-picker">
+          {videoUrl ? (
+            <View className="video-item">
+              <Video
+                src={videoUrl}
+                controls
+                className="picked-video"
+              />
+              <View 
+                className="remove-video" 
+                onClick={handleRemoveVideo}
+              >
+                ×
+              </View>
+            </View>
+          ) : (
+            <View className="add-video" onClick={handleChooseVideo}>
+              <Text className="add-icon">+</Text>
+              <Text className="add-text">添加视频</Text>
             </View>
           )}
         </View>

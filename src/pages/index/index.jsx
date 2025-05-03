@@ -1,79 +1,165 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView } from '@tarojs/components';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { View, ScrollView, Input } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useReachBottom } from '@tarojs/taro';
-import { isLoggedIn } from '../../utils/request';
-import { MOCK_POSTS } from '../../utils/mockData';
+import { get } from '../../utils/request';
+import { POST_URLS } from '../../constants/api';
 import PostItem from '../../components/PostItem';
 import './index.scss';
 
 const Index = () => {
-  const [posts, setPosts] = useState([]);
+  const [diaries, setDiaries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [keyword, setKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const isFirstLoad = useRef(true);
 
   // 获取游记列表
-  const fetchPosts = useCallback(async (refresh = false) => {
+  const fetchDiaries = useCallback(async (refresh = false) => {
     try {
+      // 如果刷新，重置页码
       if (refresh) {
         setRefreshing(true);
+        setPage(1);
       } else {
         setLoading(true);
       }
 
-      // 使用模拟数据
-      setTimeout(() => {
-        setPosts(MOCK_POSTS);
-        setLoading(false);
-        setRefreshing(false);
+      const currentPage = refresh ? 1 : page;
+      const params = {
+        page: currentPage,
+        pageSize,
+        keyword: searchKeyword
+      };
+
+      console.log('正在获取游记列表', params);
+
+      // 调用真实API获取数据
+      const response = await get(POST_URLS.LIST, params);
+      
+      // 处理响应数据
+      if (response) {
+        const { diaries: newDiaries, total: totalCount } = response;
         
-        // 停止下拉刷新状态
+        // 转换为组件需要的格式
+        const formattedDiaries = newDiaries.map(diary => ({
+          postId: diary.id,
+          title: diary.title,
+          author: diary.author.nickname,
+          authorId: diary.author.id,
+          coverImage: diary.coverImage,
+          status: 'approved', // 此API只返回已审核通过的
+          authorAvatar: diary.author.avatarUrl
+        }));
+        
+        // 如果是刷新，直接替换数据
         if (refresh) {
-          Taro.stopPullDownRefresh();
+          setDiaries(formattedDiaries);
+        } else {
+          // 否则追加数据
+          setDiaries(prev => [...prev, ...formattedDiaries]);
         }
-      }, 1000); // 模拟网络延迟
+        
+        setTotal(totalCount);
+        setHasMore(currentPage * pageSize < totalCount);
+        setPage(currentPage + 1);
+      }
     } catch (error) {
+      console.error('获取游记列表失败', error);
       Taro.showToast({
         title: '获取游记列表失败',
         icon: 'none',
       });
+    } finally {
       setLoading(false);
       setRefreshing(false);
+      
+      // 停止下拉刷新状态
+      if (refresh) {
+        Taro.stopPullDownRefresh();
+      }
     }
-  }, []);
+  }, [page, pageSize, searchKeyword]);
 
-  // 页面加载时检查登录状态并获取游记列表
+  // 页面加载时获取游记列表
   useEffect(() => {
-    if (!isLoggedIn()) {
-      Taro.navigateTo({
-        url: '/pages/login/index'
-      });
-      return;
+    if (isFirstLoad.current) {
+      fetchDiaries(true);
+      isFirstLoad.current = false;
     }
-    
-    fetchPosts(true);
-  }, [fetchPosts]);
+  }, []);  // 移除fetchDiaries依赖，避免无限循环
+
+  // 当搜索关键词改变时重新获取数据
+  useEffect(() => {
+    if (!isFirstLoad.current) {
+      fetchDiaries(true);
+    }
+  }, [searchKeyword]);
 
   // 下拉刷新
   usePullDownRefresh(() => {
-    fetchPosts(true);
+    fetchDiaries(true);
   });
+
+  // 上拉加载更多
+  useReachBottom(() => {
+    if (hasMore && !loading) {
+      fetchDiaries();
+    }
+  });
+
+  // 处理搜索输入
+  const handleKeywordChange = (e) => {
+    setKeyword(e.detail.value);
+  };
+
+  // 执行搜索
+  const handleSearch = () => {
+    setSearchKeyword(keyword);
+    fetchDiaries(true);
+  };
+
+  // 处理搜索框回车事件
+  const handleKeywordConfirm = () => {
+    handleSearch();
+  };
 
   return (
     <View className="index-container">
+      <View className="search-bar">
+        <Input
+          className="search-input"
+          placeholder="搜索游记标题或作者"
+          value={keyword}
+          onInput={handleKeywordChange}
+          onConfirm={handleKeywordConfirm}
+          confirmType="search"
+        />
+        <View className="search-btn" onClick={handleSearch}>搜索</View>
+      </View>
+
       <ScrollView
-        className="post-list"
+        className="diary-list"
         scrollY
         enableBackToTop
       >
-        {posts.map(post => (
-          <PostItem key={post.postId} post={post} />
+        {diaries.map(diary => (
+          <PostItem key={diary.postId} post={diary} />
         ))}
         
         {loading && !refreshing && (
-          <View className="loading-more">加载更多...</View>
+          <View className="loading-more">正在加载更多...</View>
         )}
         
-        {!loading && posts.length === 0 && (
+        {!hasMore && diaries.length > 0 && (
+          <View className="no-more">已经到底啦~</View>
+        )}
+        
+        {!loading && diaries.length === 0 && (
           <View className="empty-list">暂无游记，快来发布第一篇吧</View>
         )}
       </ScrollView>

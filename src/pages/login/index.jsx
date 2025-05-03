@@ -1,23 +1,43 @@
-import { useState } from 'react';
-import { View, Text, Input, Button } from '@tarojs/components';
+import { useState, useEffect } from 'react';
+import { View, Text, Input, Button, Checkbox, Label } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { setToken, setUserInfo } from '../../utils/request';
-import { MOCK_USERS } from '../../utils/mockData';
+import { setToken, setUserInfo, post } from '../../utils/request';
+import { AUTH_URLS } from '../../constants/api';
 import './index.scss';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isAutoFilled, setIsAutoFilled] = useState(false);
+
+  // 页面加载时检查是否有保存的登录信息
+  useEffect(() => {
+    const savedCredentials = Taro.getStorageSync('savedCredentials');
+    if (savedCredentials) {
+      setUsername(savedCredentials.username || '');
+      setPassword(savedCredentials.password || '');
+      setRememberMe(true);
+      setIsAutoFilled(true);
+    }
+  }, []);
 
   // 处理用户名变化
   const handleUsernameChange = (e) => {
     setUsername(e.detail.value);
+    if (isAutoFilled) setIsAutoFilled(false);
   };
 
   // 处理密码变化
   const handlePasswordChange = (e) => {
     setPassword(e.detail.value);
+    if (isAutoFilled) setIsAutoFilled(false);
+  };
+
+  // 处理记住我复选框变化
+  const handleRememberMeChange = (e) => {
+    setRememberMe(e.detail.value);
   };
 
   // 执行登录
@@ -42,18 +62,56 @@ const Login = () => {
     try {
       setLoading(true);
       
-      // 使用模拟数据验证登录
-      const user = MOCK_USERS.find(
-        user => user.username === username && user.password === password
-      );
+      // 调用实际后端API
+      const response = await post(AUTH_URLS.LOGIN, {
+        username,
+        password
+      });
       
-      if (user) {
-        // 生成模拟token
-        const token = `mock_token_${user.id}_${Date.now()}`;
+      console.log('登录响应:', response); // 添加日志，查看响应格式
+      
+      // 检查不同可能的token字段位置（适应不同API格式）
+      let token = null;
+      let userData = {};
+      
+      if (response) {
+        // 尝试不同的token位置
+        if (response.token) {
+          token = response.token;
+          userData = response;
+        } else if (response.data && response.data.token) {
+          token = response.data.token;
+          userData = response.data;
+        } else if (response.access_token) {
+          token = response.access_token;
+          userData = response;
+        }
+      }
+      
+      if (token) {
+        console.log('成功获取到token:', token);
+        
+        // 如果用户选择记住密码，保存登录信息
+        if (rememberMe) {
+          Taro.setStorageSync('savedCredentials', {
+            username,
+            password
+          });
+        } else {
+          // 如果不记住密码，清除之前可能保存的信息
+          Taro.removeStorageSync('savedCredentials');
+        }
         
         // 保存令牌和用户信息
         setToken(token);
-        setUserInfo(user);
+        
+        // 保存用户信息（字段名可能因后端API而异）
+        setUserInfo({
+          id: userData.id || userData.userId || '',
+          username: userData.username || username,
+          nickname: userData.nickname || userData.name || username,
+          avatarUrl: userData.avatarUrl || userData.avatar || ''
+        });
 
         Taro.showToast({
           title: '登录成功',
@@ -67,12 +125,14 @@ const Login = () => {
           });
         }, 1500);
       } else {
+        console.error('登录响应中没有找到token:', response);
         Taro.showToast({
-          title: '用户名或密码错误',
+          title: '登录失败，请检查用户名和密码',
           icon: 'none',
         });
       }
     } catch (error) {
+      console.error('登录失败:', error);
       Taro.showToast({
         title: error.message || '登录失败，请稍后再试',
         icon: 'none',
@@ -116,6 +176,18 @@ const Login = () => {
             value={password}
             onInput={handlePasswordChange}
           />
+        </View>
+
+        <View className="form-options">
+          <Label className="remember-me-label">
+            <Checkbox 
+              className="remember-me-checkbox"
+              checked={rememberMe}
+              onChange={handleRememberMeChange}
+            />
+            <Text className="remember-me-text">记住密码</Text>
+          </Label>
+          <Text className="forgot-password">忘记密码?</Text>
         </View>
 
         <Button

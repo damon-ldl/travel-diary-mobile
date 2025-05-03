@@ -33,7 +33,7 @@
 - **UI组件**：Taro 内置组件
 - **状态管理**：React Hooks
 - **样式处理**：Sass/SCSS
-- **模拟数据**：本地Mock数据
+- **API请求**：与后端RESTful API交互
 
 ## 安装与运行
 
@@ -119,8 +119,7 @@ travel-diary-mobile/
 │   │   └── my/           # 个人中心
 │   ├── utils/            # 工具函数
 │   │   ├── request.js    # 请求工具
-│   │   ├── auth.js       # 认证相关工具
-│   │   └── mockData.js   # 模拟数据
+│   │   └── auth.js       # 认证相关工具
 │   ├── app.js            # 应用入口
 │   ├── app.scss          # 全局样式
 │   └── app.config.js     # 应用配置
@@ -129,29 +128,24 @@ travel-diary-mobile/
 
 ## 开发说明
 
-### 模拟数据
-
-目前应用使用本地模拟数据进行开发测试，模拟数据位于 `src/utils/mockData.js` 文件中。
-
 ### 接口说明
 
-实际生产环境中，应与后端API配合使用。后端API规范如下：
+应用与后端API配合使用。后端API规范如下：
 
 - `POST /api/auth/register`：用户注册
 - `POST /api/auth/login`：用户登录
-- `GET /api/posts`：获取游记列表
-- `GET /api/posts/{postId}`：获取游记详情
-- `POST /api/posts`：发布新游记
-- `PUT /api/posts/{postId}`：更新游记
-- `POST /api/posts/{postId}/like`：点赞/取消点赞
+- `GET /api/diaries`：获取游记列表
+- `GET /api/diaries/{id}`：获取游记详情
+- `POST /api/diaries`：发布新游记
+- `PUT /api/diaries/{id}`：更新游记
+- `POST /api/diaries/{id}/like`：点赞/取消点赞
 
 ## 后续开发计划
 
 ### 近期计划
-1. **接入真实API**：替换当前的模拟数据，连接到真实的后端服务
-2. **完善游记管理**：优化游记的发布和管理功能，支持草稿箱
-3. **增强社交互动**：完善评论系统，增加用户互动功能
-4. **优化用户体验**：改进UI界面，提升用户体验
+1. **完善游记管理**：优化游记的发布和管理功能，支持草稿箱
+2. **增强社交互动**：完善评论系统，增加用户互动功能
+3. **优化用户体验**：改进UI界面，提升用户体验
 
 ### 中长期计划
 1. **位置服务集成**：集成地图服务，支持位置标记和轨迹记录
@@ -166,7 +160,9 @@ travel-diary-mobile/
 
 ## 联系方式
 
-项目维护者：[黎栋梁] - [cassielldl@gmail.com](mailto:cassielldl@gmail.com)
+项目维护者：[dongliangli] - [cassielldl@gmail.com](mailto:cassielldl@gmail.com)
+
+项目维护者：[junsun] - [a2019124741@gmail.com](mailto:a2019124741@gmail.com)
 
 ---
 

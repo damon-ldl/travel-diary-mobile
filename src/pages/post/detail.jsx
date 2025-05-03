@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { getUserInfo } from '../../utils/request';
-import { MOCK_POSTS } from '../../utils/mockData';
+import { getUserInfo, get } from '../../utils/request';
+import { POST_URLS } from '../../constants/api';
 import './detail.scss';
 
 const PostDetail = () => {
@@ -31,34 +31,36 @@ const PostDetail = () => {
           return;
         }
 
-        // 使用模拟数据
-        setTimeout(() => {
-          const post = MOCK_POSTS.find(p => p.postId === id);
+        // 调用真实API获取游记详情
+        const response = await get(POST_URLS.DETAIL(id));
+        
+        if (response) {
+          // 将API返回的数据转换为组件需要的格式
+          const formattedDetail = {
+            postId: response.id,
+            title: response.title,
+            content: response.content,
+            author: response.author.nickname,
+            authorId: response.author.id,
+            authorAvatar: response.author.avatarUrl,
+            createTime: response.createdAt,
+            images: response.images,
+            videoUrl: response.videoUrl,
+            status: response.status
+          };
           
-          if (post) {
-            setPostDetail(post);
-            
-            // 设置点赞状态
-            if (post.likes) {
-              setLikeCount(post.likes.length);
-              
-              // 判断当前用户是否点赞
-              const currentUser = getUserInfo();
-              if (currentUser && post.likes.includes(currentUser.id)) {
-                setLiked(true);
-              }
-            }
-            
-            // 判断是否是作者本人
-            const currentUser = getUserInfo();
-            if (currentUser && post.authorId === currentUser.id) {
-              setIsOwner(true);
-            }
+          setPostDetail(formattedDetail);
+          
+          // 判断是否是作者本人
+          const currentUser = getUserInfo();
+          if (currentUser && response.author.id === currentUser.id) {
+            setIsOwner(true);
           }
-          
-          setLoading(false);
-        }, 1000);
+        }
+        
+        setLoading(false);
       } catch (error) {
+        console.error('获取游记详情失败', error);
         Taro.showToast({
           title: '获取游记详情失败',
           icon: 'none',
@@ -73,7 +75,10 @@ const PostDetail = () => {
   // 处理点赞
   const handleLike = async () => {
     try {
-      // 模拟点赞操作
+      // TODO: 调用真实的点赞API
+      // const response = await post(POST_URLS.LIKE(postDetail.postId));
+      
+      // 暂时模拟点赞操作
       setLiked(!liked);
       setLikeCount(prev => liked ? prev - 1 : prev + 1);
       

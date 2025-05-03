@@ -1,5 +1,5 @@
 // API 基础URL
-export const BASE_URL = 'http://localhost:3000/api';
+export const BASE_URL = 'http://localhost:5000/api';
 
 // 认证相关接口
 export const AUTH_URLS = {
@@ -9,10 +9,10 @@ export const AUTH_URLS = {
 
 // 游记相关接口
 export const POST_URLS = {
-  LIST: `${BASE_URL}/posts`,
-  DETAIL: (id) => `${BASE_URL}/posts/${id}`,
-  CREATE: `${BASE_URL}/posts`,
-  UPDATE: (id) => `${BASE_URL}/posts/${id}`,
-  LIKE: (id) => `${BASE_URL}/posts/${id}/like`,
-  COMMENT: (id) => `${BASE_URL}/posts/${id}/comments`,
+  LIST: `${BASE_URL}/diaries`,
+  DETAIL: (id) => `${BASE_URL}/diaries/${id}`,
+  CREATE: `${BASE_URL}/diaries`,
+  UPDATE: (id) => `${BASE_URL}/diaries/${id}`,
+  LIKE: (id) => `${BASE_URL}/diaries/${id}/like`,
+  COMMENT: (id) => `${BASE_URL}/diaries/${id}/comments`,
 }; 
