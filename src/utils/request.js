@@ -157,6 +157,19 @@ export const request = (url, options = {}) => {
 
 // 封装常用的请求方法
 export const get = (url, params = {}) => {
+  // 检查是否是访问静态资源的请求
+  if (url.includes('/uploads/') || url.includes('/avatars/') || url.includes('/images/')) {
+    // 静态资源请求使用不同的配置
+    return request(url, { 
+      method: 'GET', 
+      data: params,
+      responseType: 'arraybuffer',
+      header: {
+        'Accept': 'image/*,video/*,audio/*'
+      }
+    });
+  }
+  // 普通API请求
   return request(url, { method: 'GET', data: params });
 };
 

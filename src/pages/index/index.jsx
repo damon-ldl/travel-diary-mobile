@@ -2,9 +2,23 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ScrollView, Input } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useReachBottom } from '@tarojs/taro';
 import { get } from '../../utils/request';
-import { POST_URLS } from '../../constants/api';
+import { POST_URLS, RESOURCE_URL } from '../../constants/api';
 import PostItem from '../../components/PostItem';
 import './index.scss';
+
+// 处理资源URL，确保完整路径
+const getFullResourceUrl = (url) => {
+  if (!url) return '';
+  
+  // 如果是完整URL则直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // 确保url以/开头
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${RESOURCE_URL}${normalizedUrl}`;
+};
 
 const Index = () => {
   const [diaries, setDiaries] = useState([]);
@@ -45,15 +59,15 @@ const Index = () => {
       if (response) {
         const { diaries: newDiaries, total: totalCount } = response;
         
-        // 转换为组件需要的格式
+        // 转换为组件需要的格式，并处理图片URL确保完整路径
         const formattedDiaries = newDiaries.map(diary => ({
           postId: diary.id,
           title: diary.title,
           author: diary.author.nickname,
           authorId: diary.author.id,
-          coverImage: diary.coverImage,
+          coverImage: getFullResourceUrl(diary.coverImage),
           status: 'approved', // 此API只返回已审核通过的
-          authorAvatar: diary.author.avatarUrl
+          authorAvatar: getFullResourceUrl(diary.author.avatarUrl)
         }));
         
         // 如果是刷新，直接替换数据

@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { getUserInfo, get } from '../../utils/request';
-import { POST_URLS } from '../../constants/api';
+import { POST_URLS, RESOURCE_URL } from '../../constants/api';
 import './detail.scss';
+
+// 处理资源URL，确保完整路径
+const getFullResourceUrl = (url) => {
+  if (!url) return '';
+  
+  // 如果是完整URL则直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // 确保url以/开头
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${RESOURCE_URL}${normalizedUrl}`;
+};
 
 const PostDetail = () => {
   const [postDetail, setPostDetail] = useState(null);
@@ -35,6 +49,10 @@ const PostDetail = () => {
         const response = await get(POST_URLS.DETAIL(id));
         
         if (response) {
+          // 处理图片URL确保完整路径
+          const processedImages = response.images ? 
+            response.images.map(img => getFullResourceUrl(img)) : [];
+            
           // 将API返回的数据转换为组件需要的格式
           const formattedDetail = {
             postId: response.id,
@@ -42,10 +60,10 @@ const PostDetail = () => {
             content: response.content,
             author: response.author.nickname,
             authorId: response.author.id,
-            authorAvatar: response.author.avatarUrl,
+            authorAvatar: getFullResourceUrl(response.author.avatarUrl),
             createTime: response.createdAt,
-            images: response.images,
-            videoUrl: response.videoUrl,
+            images: processedImages,
+            videoUrl: response.videoUrl ? getFullResourceUrl(response.videoUrl) : null,
             status: response.status
           };
           
