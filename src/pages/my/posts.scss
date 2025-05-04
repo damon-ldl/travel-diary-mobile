@@ -5,9 +5,85 @@
   background-color: #f6f6f6;
 }
 
+/* 顶部导航栏样式 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 44px;
+  padding: 0 15px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.back-button {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  font-size: 20px;
+  color: #333;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+.header-placeholder {
+  width: 30px;
+}
+
+/* 状态统计栏样式 */
+.status-summary {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px 10px;
+  background-color: #fff;
+  margin-bottom: 10px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.status-count {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.status-pending-text {
+  color: #ff9800; /* 橙色，表示待审核 */
+}
+
+.status-approved-text {
+  color: #4caf50; /* 绿色，表示已通过 */
+}
+
+.status-rejected-text {
+  color: #f44336; /* 红色，表示未通过 */
+}
+
+.status-label {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
 .post-list {
   flex: 1;
-  padding: 15px;
+  padding: 0 15px 15px 15px;
 }
 
 .loading {

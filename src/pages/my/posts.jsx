@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView } from '@tarojs/components';
+import { View, Text, ScrollView, Button } from '@tarojs/components';
 import Taro, { usePullDownRefresh, navigateTo } from '@tarojs/taro';
 import { get, del, getUserInfo, isLoggedIn } from '../../utils/request';
 import { POST_URLS, RESOURCE_URL } from '../../constants/api';
@@ -24,6 +24,11 @@ const MyPosts = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // 返回上一页
+  const handleBack = () => {
+    Taro.navigateBack();
+  };
 
   // 获取当前用户的游记列表
   const fetchMyPosts = useCallback(async (refresh = false) => {
@@ -151,8 +156,45 @@ const MyPosts = () => {
     fetchMyPosts(true);
   });
 
+  // 统计不同状态的游记数量
+  const statusCounts = {
+    total: posts.length,
+    pending: posts.filter(post => post.status === 'pending').length,
+    approved: posts.filter(post => post.status === 'approved').length,
+    rejected: posts.filter(post => post.status === 'rejected').length
+  };
+
   return (
     <View className="my-posts-container">
+      {/* 顶部导航栏 */}
+      <View className="header">
+        <View className="back-button" onClick={handleBack}>
+          <Text className="back-icon">←</Text>
+        </View>
+        <Text className="header-title">我的游记</Text>
+        <View className="header-placeholder"></View>
+      </View>
+
+      {/* 状态统计栏 */}
+      <View className="status-summary">
+        <View className="status-item">
+          <Text className="status-count">{statusCounts.total}</Text>
+          <Text className="status-label">全部</Text>
+        </View>
+        <View className="status-item">
+          <Text className="status-count status-pending-text">{statusCounts.pending}</Text>
+          <Text className="status-label">待审核</Text>
+        </View>
+        <View className="status-item">
+          <Text className="status-count status-approved-text">{statusCounts.approved}</Text>
+          <Text className="status-label">已通过</Text>
+        </View>
+        <View className="status-item">
+          <Text className="status-count status-rejected-text">{statusCounts.rejected}</Text>
+          <Text className="status-label">未通过</Text>
+        </View>
+      </View>
+
       <ScrollView
         className="post-list"
         scrollY
