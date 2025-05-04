@@ -10,7 +10,7 @@ const getBaseUrl = () => {
   // 微信开发工具中使用IP地址替代localhost
   if (isWechatMiniProgram) {
     // 本地局域网IP地址，请根据实际情况修改
-    devUrl = 'http://10.168.0.148:5000/api'; 
+    devUrl = 'http://192.168.44.1:5000/api'; 
     // 也可以使用内网穿透工具提供的URL，例如：
     // devUrl = 'https://your-ngrok-url.ngrok.io/api';
   }
