@@ -5,14 +5,34 @@ import { post } from '../../utils/request';
 import { AUTH_URLS } from '../../constants/api';
 import './index.scss';
 
+// 定义一个函数用于生成随机卡通头像URL
+const generateRandomAvatar = () => {
+  // 常用的卡通头像API
+  const avatarStyles = [
+    'avataaars', 'bottts', 'jdenticon', 'gridy', 'micah',
+    'adventurer', 'big-smile', 'croodles', 'open-peeps', 'pixel-art'
+  ];
+  
+  // 随机选择一种风格
+  const style = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
+  
+  // 生成随机种子
+  const seed = Math.floor(Math.random() * 1000);
+  
+  // 使用DiceBear API生成头像
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+};
+
 const Register = () => {
   const [username, setUsername] = useState('');
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [randomAvatar, setRandomAvatar] = useState(generateRandomAvatar());
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [useRandomAvatar, setUseRandomAvatar] = useState(true); // 默认使用随机头像
 
   // 处理用户名变化
   const handleUsernameChange = (e) => {
@@ -58,8 +78,16 @@ const Register = () => {
       sourceType: ['album', 'camera'],
       success: function (res) {
         setAvatar(res.tempFilePaths[0]);
+        setUseRandomAvatar(false); // 用户选择了自己的头像，不使用随机头像
       }
     });
+  };
+
+  // 重新生成随机头像
+  const regenerateRandomAvatar = () => {
+    setRandomAvatar(generateRandomAvatar());
+    setUseRandomAvatar(true);
+    setAvatar(''); // 清除可能已上传的头像
   };
 
   // 表单验证
@@ -114,13 +142,34 @@ const Register = () => {
         password
       };
       
-      // 如果有头像，上传头像
-      if (avatar) {
-        // 根据实际情况处理头像上传
-        // 这里假设API支持base64格式的头像
-        // 实际可能需要调用上传接口或直接传递文件
-        params.avatar = avatar;
+      // 如果有上传头像，则使用上传的头像
+      if (avatar && !useRandomAvatar) {
+        try {
+          // 上传用户选择的头像
+          const uploadRes = await Taro.uploadFile({
+            url: `${AUTH_URLS.BASE_URL}/upload`,
+            filePath: avatar,
+            name: 'file',
+            formData: {
+              type: 'avatar'
+            }
+          });
+          
+          if (uploadRes.statusCode === 200) {
+            const data = JSON.parse(uploadRes.data);
+            params.avatarUrl = data.url;
+          }
+        } catch (error) {
+          console.error('上传头像失败:', error);
+          // 头像上传失败时继续注册流程，使用随机头像
+          params.avatarUrl = randomAvatar;
+        }
+      } else {
+        // 使用随机生成的头像
+        params.avatarUrl = randomAvatar;
       }
+      
+      console.log('注册参数:', params);
       
       // 调用实际的注册API
       const response = await post(AUTH_URLS.REGISTER, params);
@@ -222,15 +271,29 @@ const Register = () => {
         </View>
 
         <View className="form-item avatar-item">
-          <Text className="form-label">头像（可选）</Text>
-          <View className="avatar-upload" onClick={chooseAvatar}>
-            {avatar ? (
-              <Image className="avatar-preview" src={avatar} />
-            ) : (
-              <View className="avatar-placeholder">
-                <Text>点击上传</Text>
-              </View>
-            )}
+          <Text className="form-label">头像</Text>
+          <View className="avatar-options">
+            <View className="avatar-preview-container">
+              {avatar && !useRandomAvatar ? (
+                <Image className="avatar-preview" src={avatar} />
+              ) : (
+                <Image className="avatar-preview" src={randomAvatar} />
+              )}
+            </View>
+            <View className="avatar-actions">
+              <Button 
+                className="avatar-action-btn"
+                onClick={chooseAvatar}
+              >
+                上传头像
+              </Button>
+              <Button 
+                className="avatar-action-btn random-avatar-btn"
+                onClick={regenerateRandomAvatar}
+              >
+                随机头像
+              </Button>
+            </View>
           </View>
         </View>
 

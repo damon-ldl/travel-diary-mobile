@@ -2,6 +2,7 @@ import { defineConfig } from '@tarojs/cli'
 
 import devConfig from './dev'
 import prodConfig from './prod'
+const antdMobileConfig = require('./antdMobile')
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig(async (merge, { command, mode }) => {
@@ -47,6 +48,8 @@ export default defineConfig(async (merge, { command, mode }) => {
           }
         }
       },
+      webpackChain: antdMobileConfig.mini.webpackChain,
+      prebundle: antdMobileConfig.mini.prebundle
     },
     h5: {
       publicPath: '/',

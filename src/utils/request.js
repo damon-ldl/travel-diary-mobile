@@ -39,6 +39,11 @@ export const isLoggedIn = () => {
   return !!getToken();
 };
 
+// 检查对象是否类似FormData
+const isFormDataLike = (data) => {
+  return data && typeof data === 'object' && data.hasOwnProperty('_entries');
+};
+
 // 统一请求方法
 export const request = (url, options = {}) => {
   // 检查 URL 是否已经是绝对 URL
@@ -77,8 +82,8 @@ export const request = (url, options = {}) => {
     ...options,
   };
 
-  // 检测是否为FormData类型
-  if (options.data instanceof FormData) {
+  // 检测是否为FormData类型或类似FormData的对象
+  if (isFormDataLike(options.data)) {
     // FormData需要使用multipart/form-data格式
     mergedOptions.header['Content-Type'] = 'multipart/form-data';
   }
