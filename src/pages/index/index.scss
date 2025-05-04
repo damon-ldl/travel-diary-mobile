@@ -67,6 +67,7 @@
   border-radius: 4px;
 }
 
+/* 瀑布流布局 */
 .cards-container {
   display: flex;
   padding-bottom: 20px;
@@ -75,6 +76,25 @@
 .cards-column {
   flex: 1;
   padding: 0 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 左侧列第一张卡片更高，右侧列第二张卡片更高，形成交错效果 */
+.cards-column:first-child .card-item:nth-child(odd) .card-image {
+  height: 240px;
+}
+
+.cards-column:last-child .card-item:nth-child(even) .card-image {
+  height: 260px;
+}
+
+.cards-column:first-child .card-item:nth-child(even) .card-image {
+  height: 180px;
+}
+
+.cards-column:last-child .card-item:nth-child(odd) .card-image {
+  height: 200px;
 }
 
 .card-item {
@@ -83,16 +103,24 @@
   overflow: hidden;
   margin-bottom: 15px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  break-inside: avoid; /* 防止卡片被分割 */
+  transform: translateZ(0); /* 优化GPU渲染 */
 }
 
 .card-image {
   width: 100%;
-  height: 200px;
   border-radius: 12px 12px 0 0;
+  object-fit: cover;
+  transition: all 0.3s ease;
 }
 
 .card-content {
   padding: 10px 15px 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-title {
@@ -112,6 +140,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto; /* 推到底部 */
 }
 
 .card-author {
@@ -124,13 +153,6 @@
   height: 40px;
   border-radius: 20px;
   margin-right: 8px;
-}
-
-.ant-avatar-wrapper {
-  margin-right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .author-name {
@@ -157,4 +179,74 @@
   text-align: center;
   color: #999;
   font-size: 26px;
+}
+
+.card-brief {
+  font-size: 24px;
+  color: #666;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+/* 卡片悬停/点击效果 */
+.card-item:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+
+/* 瀑布流布局优化 - 随机化部分卡片的边距 */
+.cards-column:first-child .card-item:nth-child(3n+1) {
+  margin-bottom: 20px;
+}
+
+.cards-column:last-child .card-item:nth-child(3n+2) {
+  margin-bottom: 20px;
+}
+
+/* 分页加载相关样式 */
+.load-more-btn {
+  margin: 20px auto 30px;
+  width: 60%;
+  height: 80px;
+  line-height: 80px;
+  text-align: center;
+  background: #f0f2f5;
+  color: #666;
+  border-radius: 40px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.load-more-btn:active {
+  background: #e8e8e8;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1890ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

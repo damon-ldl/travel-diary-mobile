@@ -4,7 +4,8 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  background-color: #f8f9fa;
+  background: url('../../public/images/background.png') no-repeat center center;
+  background-size: cover;
 }
 
 .login-header {
@@ -15,22 +16,25 @@
 .login-title {
   font-size: 28px;
   font-weight: bold;
-  color: #333;
+  color: #fff;
   margin-bottom: 10px;
   display: block;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .login-subtitle {
   font-size: 16px;
-  color: #666;
+  color: #f0f0f0;
   display: block;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .login-form {
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.9);
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
 }
 
 .form-item {
@@ -132,13 +136,15 @@
   margin-top: 30px;
   padding: 15px;
   border-radius: 8px;
-  background-color: #f0f8ff;
-  opacity: 0.8;
+  background-color: rgba(240, 248, 255, 0.8);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .demo-tip {
   display: block;
   font-size: 14px;
-  color: #666;
+  color: #333;
   margin-bottom: 5px;
+  text-align: center;
 } 

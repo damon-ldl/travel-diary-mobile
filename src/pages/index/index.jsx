@@ -26,16 +26,27 @@ const Index = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(8); // 减小每页加载数量，使分页更明显
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [keyword, setKeyword] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [loadError, setLoadError] = useState(false);
   const isFirstLoad = useRef(true);
+
+  // 计算总页数
+  const calculateTotalPages = useCallback((totalItems, size) => {
+    return Math.ceil(totalItems / size);
+  }, []);
 
   // 获取游记列表
   const fetchDiaries = useCallback(async (refresh = false) => {
     try {
+      setLoadError(false);
+      
       // 如果刷新，重置页码
+      const currentPage = refresh ? 1 : page;
+      
       if (refresh) {
         setRefreshing(true);
         setPage(1);
@@ -43,7 +54,6 @@ const Index = () => {
         setLoading(true);
       }
 
-      const currentPage = refresh ? 1 : page;
       const params = {
         page: currentPage,
         pageSize,
@@ -60,6 +70,10 @@ const Index = () => {
         if (response) {
           const { diaries: newDiaries, total: totalCount } = response;
           
+          // 计算总页数
+          const calculatedTotalPages = calculateTotalPages(totalCount, pageSize);
+          setTotalPages(calculatedTotalPages);
+          
           // 转换为组件需要的格式，并处理图片URL确保完整路径
           const formattedDiaries = newDiaries.map(diary => {
             // 使用服务器返回的头像，包括默认头像
@@ -68,6 +82,7 @@ const Index = () => {
             return {
               postId: diary.id,
               title: diary.title,
+              brief: diary.content ? diary.content.substring(0, 60) + '...' : null,
               author: diary.author.nickname,
               authorId: diary.author.id,
               coverImage: getFullResourceUrl(diary.coverImage),
@@ -86,71 +101,55 @@ const Index = () => {
           }
           
           setTotal(totalCount);
-          setHasMore(currentPage * pageSize < totalCount);
+          setHasMore(currentPage < calculatedTotalPages);
           setPage(currentPage + 1);
         }
       } catch (apiError) {
         console.error('API请求失败，使用模拟数据', apiError);
         
         // 使用模拟数据
-        const mockDiaries = [
-          {
-            postId: 1,
-            title: '东京旅行记忆',
-            author: '旅行爱好者',
-            authorId: 101,
-            coverImage: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26',
-            status: 'approved',
-            authorAvatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12',
-            viewCount: 328
-          },
-          {
-            postId: 2,
-            title: '巴黎印象',
-            author: '摄影师小明',
-            authorId: 102,
-            coverImage: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a',
-            status: 'approved',
-            authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-            viewCount: 207
-          },
-          {
-            postId: 3,
-            title: '纽约文化之旅',
-            author: '城市探索者',
-            authorId: 103,
-            coverImage: 'https://images.unsplash.com/photo-1496588152823-86ff7695e68f',
-            status: 'approved',
-            authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-            viewCount: 156
-          },
-          {
-            postId: 4,
-            title: '泰国美食记',
-            author: '美食家',
-            authorId: 104,
-            coverImage: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
-            status: 'approved',
-            authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
-            viewCount: 432
-          }
-        ];
+        // 生成更多样化的模拟数据
+        const getRandomMockDiaries = (count, startId) => {
+          const locations = ['东京', '巴黎', '纽约', '曼谷', '伦敦', '悉尼', '罗马', '北京', '香港', '迪拜'];
+          const topics = ['旅行记忆', '印象', '文化之旅', '美食记', '建筑巡礼', '艺术探访', '历史寻踪', '自然风光', '购物体验', '摄影集'];
+          const authorList = ['旅行爱好者', '摄影师小明', '城市探索者', '美食家', '建筑师', '艺术家', '历史学家', '自然爱好者', '购物达人', '专业摄影师'];
+          
+          return Array.from({ length: count }, (_, i) => {
+            const locationIndex = Math.floor(Math.random() * locations.length);
+            const topicIndex = Math.floor(Math.random() * topics.length);
+            const authorIndex = Math.floor(Math.random() * authorList.length);
+            const id = startId + i;
+            
+            return {
+              postId: id,
+              title: `${locations[locationIndex]}${topics[topicIndex]}`,
+              brief: `这是一篇关于${locations[locationIndex]}的${topics[topicIndex]}，包含了许多精彩内容和图片...`,
+              author: authorList[authorIndex],
+              authorId: 100 + authorIndex,
+              coverImage: `https://source.unsplash.com/random/400x${200 + (id % 4) * 20}?travel,${locations[locationIndex].toLowerCase()}`,
+              status: 'approved',
+              authorAvatar: `https://randomuser.me/api/portraits/${id % 2 ? 'men' : 'women'}/${id % 10 + 1}.jpg`,
+              viewCount: Math.floor(Math.random() * 1000)
+            };
+          });
+        };
         
-        const totalCount = 10; // 模拟总数
+        const totalCount = 24; // 模拟总数
+        const mockCount = Math.min(pageSize, totalCount - (currentPage - 1) * pageSize);
+        const startId = (currentPage - 1) * pageSize + 1;
+        
+        const mockDiaries = getRandomMockDiaries(mockCount, startId);
+        const calculatedTotalPages = calculateTotalPages(totalCount, pageSize);
+        setTotalPages(calculatedTotalPages);
         
         if (refresh) {
           setDiaries(mockDiaries);
         } else {
-          // 避免重复数据
-          const newMockDiaries = mockDiaries.map(diary => ({
-            ...diary,
-            postId: diary.postId + (currentPage - 1) * pageSize
-          }));
-          setDiaries(prev => [...prev, ...newMockDiaries]);
+          setDiaries(prev => [...prev, ...mockDiaries]);
         }
         
         setTotal(totalCount);
-        setHasMore(currentPage * pageSize < totalCount);
+        setHasMore(currentPage < calculatedTotalPages);
         setPage(currentPage + 1);
         
         Taro.showToast({
@@ -161,6 +160,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('获取游记列表失败', error);
+      setLoadError(true);
       Taro.showToast({
         title: '获取游记列表失败',
         icon: 'none',
@@ -174,7 +174,7 @@ const Index = () => {
         Taro.stopPullDownRefresh();
       }
     }
-  }, [page, pageSize, searchKeyword]);
+  }, [page, pageSize, searchKeyword, calculateTotalPages]);
 
   // 页面加载时获取游记列表
   useEffect(() => {
@@ -182,14 +182,14 @@ const Index = () => {
       fetchDiaries(true);
       isFirstLoad.current = false;
     }
-  }, []);  // 移除fetchDiaries依赖，避免无限循环
+  }, [fetchDiaries]);
 
   // 当搜索关键词改变时重新获取数据
   useEffect(() => {
     if (!isFirstLoad.current) {
       fetchDiaries(true);
     }
-  }, [searchKeyword]);
+  }, [searchKeyword, fetchDiaries]);
 
   // 下拉刷新
   usePullDownRefresh(() => {
@@ -203,6 +203,13 @@ const Index = () => {
     }
   });
 
+  // 手动加载更多
+  const handleLoadMore = () => {
+    if (hasMore && !loading) {
+      fetchDiaries();
+    }
+  };
+
   // 处理搜索输入
   const handleKeywordChange = (e) => {
     setKeyword(e.detail.value);
@@ -211,7 +218,6 @@ const Index = () => {
   // 执行搜索
   const handleSearch = () => {
     setSearchKeyword(keyword);
-    fetchDiaries(true);
   };
 
   // 处理搜索框回车事件
@@ -226,12 +232,21 @@ const Index = () => {
     });
   };
 
+  // 重试加载
+  const handleRetry = () => {
+    setLoadError(false);
+    fetchDiaries(true);
+  };
+
   // 生成两列布局的数据
   const getColumnData = () => {
     const leftColumn = [];
     const rightColumn = [];
     
+    // 将游记数据按照交错方式分配到左右两列，实现瀑布流
     diaries.forEach((diary, index) => {
+      // 根据游记标题长度和图片来分配，以形成更好的瀑布流效果
+      // 这里我们使用简单的策略：按索引交错分配
       if (index % 2 === 0) {
         leftColumn.push(diary);
       } else {
@@ -255,9 +270,16 @@ const Index = () => {
         className="card-image" 
         mode="aspectFill"
         src={diary.coverImage || 'https://example.com/placeholder.jpg'} 
+        lazyLoad
       />
       <View className="card-content">
         <Text className="card-title">{diary.title}</Text>
+        
+        {/* 添加简短描述，如果有的话 */}
+        {diary.brief && (
+          <Text className="card-brief">{diary.brief}</Text>
+        )}
+        
         <View className="card-footer">
           <View className="card-author">
             <Image 
@@ -310,15 +332,35 @@ const Index = () => {
           </View>
         </View>
         
-        {loading && !refreshing && (
-          <View className="loading-more">正在加载更多...</View>
+        {/* 加载错误状态 */}
+        {loadError && (
+          <View className="loading-more" onClick={handleRetry}>
+            加载失败，点击重试
+          </View>
         )}
         
+        {/* 加载中状态 */}
+        {loading && !refreshing && (
+          <View className="loading-container">
+            <View className="loading-spinner"></View>
+            <Text>正在加载更多...</Text>
+          </View>
+        )}
+        
+        {/* 加载更多按钮 */}
+        {hasMore && !loading && diaries.length > 0 && !loadError && (
+          <View className="load-more-btn" onClick={handleLoadMore}>
+            点击加载更多
+          </View>
+        )}
+        
+        {/* 没有更多数据 */}
         {!hasMore && diaries.length > 0 && (
           <View className="no-more">已经到底啦~</View>
         )}
         
-        {!loading && diaries.length === 0 && (
+        {/* 空数据状态 */}
+        {!loading && diaries.length === 0 && !loadError && (
           <View className="empty-list">暂无游记，快来发布第一篇吧</View>
         )}
       </ScrollView>

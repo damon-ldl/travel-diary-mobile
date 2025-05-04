@@ -34,6 +34,7 @@ export const AUTH_URLS = {
 // 游记相关接口
 export const POST_URLS = {
   LIST: `${BASE_URL}/diaries`,
+  MY_DIARIES: `${BASE_URL}/diaries/my`,
   DETAIL: (id) => `${BASE_URL}/diaries/${id}`,
   CREATE: `${BASE_URL}/diaries`,
   UPDATE: (id) => `${BASE_URL}/diaries/${id}`,

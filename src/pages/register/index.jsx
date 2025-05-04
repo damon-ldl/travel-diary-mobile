@@ -205,7 +205,9 @@ const Register = () => {
 
   // 返回登录页
   const goToLogin = () => {
-    Taro.navigateBack();
+    Taro.navigateTo({
+      url: '/pages/login/index'
+    });
   };
 
   return (
