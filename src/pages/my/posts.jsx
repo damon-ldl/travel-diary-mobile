@@ -30,6 +30,13 @@ const MyPosts = () => {
     Taro.navigateBack();
   };
 
+  // 跳转到游记发布页面
+  const handlePublish = () => {
+    navigateTo({
+      url: '/pages/post/create'
+    });
+  };
+
   // 获取当前用户的游记列表
   const fetchMyPosts = useCallback(async (refresh = false) => {
     try {
@@ -219,6 +226,12 @@ const MyPosts = () => {
           <View className="loading">加载中...</View>
         )}
       </ScrollView>
+
+      {/* 发布按钮 */}
+      <View className="publish-button" onClick={handlePublish}>
+        <Text className="publish-icon">+</Text>
+        <Text className="publish-text">发布游记</Text>
+      </View>
     </View>
   );
 };

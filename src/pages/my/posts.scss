@@ -3,6 +3,7 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: #f6f6f6;
+  position: relative; /* 为悬浮按钮提供定位基础 */
 }
 
 /* 顶部导航栏样式 */
@@ -105,4 +106,32 @@
   font-size: 16px;
   color: #999;
   margin-top: 10px;
+}
+
+/* 发布按钮样式 */
+.publish-button {
+  position: fixed;
+  right: 20px;
+  bottom: 30px;
+  width: 130px;
+  height: 44px;
+  background-color: #1677ff;
+  border-radius: 22px;
+  box-shadow: 0 4px 10px rgba(22, 119, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+}
+
+.publish-icon {
+  font-size: 20px;
+  color: #fff;
+  margin-right: 6px;
+}
+
+.publish-text {
+  font-size: 16px;
+  color: #fff;
+  font-weight: 500;
 } 
