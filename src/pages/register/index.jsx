@@ -3,25 +3,8 @@ import { View, Text, Input, Button, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { post } from '../../utils/request';
 import { AUTH_URLS } from '../../constants/api';
+import defaultAvatar from '../../assets/images/default-avatar.png';
 import './index.scss';
-
-// 定义一个函数用于生成随机卡通头像URL
-const generateRandomAvatar = () => {
-  // 常用的卡通头像API
-  const avatarStyles = [
-    'avataaars', 'bottts', 'jdenticon', 'gridy', 'micah',
-    'adventurer', 'big-smile', 'croodles', 'open-peeps', 'pixel-art'
-  ];
-  
-  // 随机选择一种风格
-  const style = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
-  
-  // 生成随机种子
-  const seed = Math.floor(Math.random() * 1000);
-  
-  // 使用DiceBear API生成头像
-  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
-};
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -29,10 +12,8 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [avatar, setAvatar] = useState('');
-  const [randomAvatar, setRandomAvatar] = useState(generateRandomAvatar());
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [useRandomAvatar, setUseRandomAvatar] = useState(true); // 默认使用随机头像
 
   // 处理用户名变化
   const handleUsernameChange = (e) => {
@@ -78,16 +59,8 @@ const Register = () => {
       sourceType: ['album', 'camera'],
       success: function (res) {
         setAvatar(res.tempFilePaths[0]);
-        setUseRandomAvatar(false); // 用户选择了自己的头像，不使用随机头像
       }
     });
-  };
-
-  // 重新生成随机头像
-  const regenerateRandomAvatar = () => {
-    setRandomAvatar(generateRandomAvatar());
-    setUseRandomAvatar(true);
-    setAvatar(''); // 清除可能已上传的头像
   };
 
   // 表单验证
@@ -135,44 +108,60 @@ const Register = () => {
     try {
       setLoading(true);
       
-      // 准备参数
+      // 准备基本参数
       const params = {
         username,
         nickname,
         password
       };
       
-      // 如果有上传头像，则使用上传的头像
-      if (avatar && !useRandomAvatar) {
-        try {
-          // 上传用户选择的头像
-          const uploadRes = await Taro.uploadFile({
-            url: `${AUTH_URLS.BASE_URL}/upload`,
-            filePath: avatar,
-            name: 'file',
-            formData: {
-              type: 'avatar'
-            }
-          });
-          
-          if (uploadRes.statusCode === 200) {
-            const data = JSON.parse(uploadRes.data);
-            params.avatarUrl = data.url;
+      console.log('开始注册请求:', {
+        url: AUTH_URLS.REGISTER,
+        params: {
+          ...params,
+          password: '***' // 隐藏密码
+        },
+        hasAvatar: !!avatar
+      });
+      
+      let response;
+      
+      // 如果用户选择了头像
+      if (avatar) {
+        console.log('上传头像和注册信息');
+        
+        // 使用 Taro.uploadFile 进行注册
+        const uploadRes = await Taro.uploadFile({
+          url: AUTH_URLS.REGISTER,
+          filePath: avatar,
+          name: 'avatar',
+          formData: params,
+          header: {
+            'content-type': 'multipart/form-data'
           }
-        } catch (error) {
-          console.error('上传头像失败:', error);
-          // 头像上传失败时继续注册流程，使用随机头像
-          params.avatarUrl = randomAvatar;
+        });
+        
+        console.log('上传响应状态:', uploadRes.statusCode);
+        
+        if (uploadRes.statusCode === 200) {
+          response = JSON.parse(uploadRes.data);
+          console.log('注册成功，响应数据:', {
+            success: true,
+            hasId: !!response?.id,
+            hasAvatar: !!response?.avatarUrl
+          });
+        } else {
+          throw new Error('注册失败');
         }
       } else {
-        // 使用随机生成的头像
-        params.avatarUrl = randomAvatar;
+        // 没有头像，直接发送注册请求
+        response = await post(AUTH_URLS.REGISTER, params);
+        console.log('注册成功，响应数据:', {
+          success: true,
+          hasId: !!response?.id,
+          hasAvatar: !!response?.avatarUrl
+        });
       }
-      
-      console.log('注册参数:', params);
-      
-      // 调用实际的注册API
-      const response = await post(AUTH_URLS.REGISTER, params);
       
       if (response && response.id) {
         Taro.showToast({
@@ -182,11 +171,26 @@ const Register = () => {
   
         // 注册成功后跳转到登录页
         setTimeout(() => {
-          Taro.navigateBack();
+          Taro.navigateTo({
+            url: '/pages/login/index'
+          });
         }, 1500);
+      } else {
+        throw new Error('注册失败，请稍后再试');
       }
     } catch (error) {
-      const errorMsg = error?.error || '注册失败，请稍后再试';
+      console.error('注册失败:', error);
+      
+      // 处理特定的错误消息
+      let errorMsg = error?.error || '注册失败，请稍后再试';
+      
+      // 处理特定的错误类型
+      if (error.statusCode === 413) {
+        errorMsg = '头像文件太大，请选择小于2MB的图片';
+      } else if (error.statusCode === 415) {
+        errorMsg = '不支持的图片格式，请选择jpg、png或gif格式';
+      }
+      
       Taro.showToast({
         title: errorMsg,
         icon: 'none',
@@ -273,27 +277,21 @@ const Register = () => {
         </View>
 
         <View className="form-item avatar-item">
-          <Text className="form-label">头像</Text>
+          <Text className="form-label">头像（可选）</Text>
           <View className="avatar-options">
             <View className="avatar-preview-container">
-              {avatar && !useRandomAvatar ? (
-                <Image className="avatar-preview" src={avatar} />
-              ) : (
-                <Image className="avatar-preview" src={randomAvatar} />
-              )}
+              <Image 
+                className="avatar-preview" 
+                src={avatar || defaultAvatar}
+                mode="aspectFill"
+              />
             </View>
             <View className="avatar-actions">
               <Button 
                 className="avatar-action-btn"
                 onClick={chooseAvatar}
               >
-                上传头像
-              </Button>
-              <Button 
-                className="avatar-action-btn random-avatar-btn"
-                onClick={regenerateRandomAvatar}
-              >
-                随机头像
+                {avatar ? '重新选择' : '上传头像'}
               </Button>
             </View>
           </View>

@@ -4,39 +4,57 @@ import { BASE_URL } from '../constants/api';
 // 获取存储的令牌
 export const getToken = () => {
   const token = Taro.getStorageSync('token');
-  console.log('获取存储的token:', token ? '存在' : '不存在');
+  console.log('获取token:', token ? '存在' : '不存在');
   return token;
 };
 
-// 设置令牌到本地存储
+// 设置令牌
 export const setToken = (token) => {
-  console.log('设置token到存储:', token);
+  console.log('设置token:', token ? '成功' : '失败');
   Taro.setStorageSync('token', token);
 };
 
 // 清除令牌
 export const clearToken = () => {
+  console.log('清除token');
   Taro.removeStorageSync('token');
 };
 
 // 保存用户信息
 export const setUserInfo = (userInfo) => {
+  console.log('保存用户信息:', {
+    hasId: !!userInfo?.id,
+    hasUsername: !!userInfo?.username,
+    hasNickname: !!userInfo?.nickname,
+    hasAvatar: !!userInfo?.avatarUrl
+  });
   Taro.setStorageSync('userInfo', userInfo);
 };
 
 // 获取用户信息
 export const getUserInfo = () => {
-  return Taro.getStorageSync('userInfo');
+  const userInfo = Taro.getStorageSync('userInfo');
+  console.log('获取用户信息:', {
+    hasInfo: !!userInfo,
+    hasId: !!userInfo?.id,
+    hasUsername: !!userInfo?.username,
+    hasNickname: !!userInfo?.nickname,
+    hasAvatar: !!userInfo?.avatarUrl
+  });
+  return userInfo;
 };
 
 // 清除用户信息
 export const clearUserInfo = () => {
+  console.log('清除用户信息');
   Taro.removeStorageSync('userInfo');
 };
 
 // 判断是否已登录
 export const isLoggedIn = () => {
-  return !!getToken();
+  const hasToken = !!getToken();
+  console.log('检查登录状态:', hasToken ? '已登录' : '未登录');
+  return hasToken;
 };
 
 // 检查对象是否类似FormData

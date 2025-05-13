@@ -62,79 +62,97 @@ const Login = () => {
     try {
       setLoading(true);
       
+      console.log('开始登录请求，参数:', {
+        username,
+        passwordLength: password ? password.length : 0
+      });
+      
       // 调用实际后端API
       const response = await post(AUTH_URLS.LOGIN, {
         username,
         password
       });
       
-      console.log('登录响应:', response); // 添加日志，查看响应格式
-      
-      // 检查不同可能的token字段位置（适应不同API格式）
-      let token = null;
-      let userData = {};
+      console.log('登录响应:', {
+        success: !!response,
+        hasToken: !!response?.token,
+        hasId: !!response?.id,
+        hasAvatar: !!response?.avatarUrl
+      });
       
       if (response) {
-        // 尝试不同的token位置
-        if (response.token) {
-          token = response.token;
-          userData = response;
-        } else if (response.data && response.data.token) {
-          token = response.data.token;
-          userData = response.data;
-        } else if (response.access_token) {
-          token = response.access_token;
-          userData = response;
-        }
-      }
-      
-      if (token) {
-        console.log('成功获取到token:', token);
+        // 获取token和用户数据
+        const { token, id, username: responseUsername, nickname, avatarUrl } = response;
         
-        // 如果用户选择记住密码，保存登录信息
-        if (rememberMe) {
-          Taro.setStorageSync('savedCredentials', {
-            username,
-            password
+        if (token) {
+          console.log('成功获取到token和用户信息');
+          
+          // 如果用户选择记住密码，保存登录信息
+          if (rememberMe) {
+            Taro.setStorageSync('savedCredentials', {
+              username,
+              password
+            });
+          } else {
+            // 如果不记住密码，清除之前可能保存的信息
+            Taro.removeStorageSync('savedCredentials');
+          }
+          
+          // 保存令牌和用户信息
+          setToken(token);
+          
+          // 确保头像URL是完整的
+          const fullAvatarUrl = avatarUrl?.startsWith('http') 
+            ? avatarUrl 
+            : `${AUTH_URLS.BASE_URL}${avatarUrl}`;
+          
+          // 保存用户信息
+          const userInfoToSave = {
+            id,
+            username: responseUsername,
+            nickname,
+            avatarUrl: fullAvatarUrl
+          };
+          
+          console.log('保存用户信息:', {
+            ...userInfoToSave,
+            token: '***'  // 隐藏实际token
           });
+          
+          setUserInfo(userInfoToSave);
+
+          Taro.showToast({
+            title: '登录成功',
+            icon: 'success',
+          });
+
+          // 登录成功后跳转到首页
+          setTimeout(() => {
+            Taro.switchTab({
+              url: '/pages/index/index',
+            });
+          }, 1500);
         } else {
-          // 如果不记住密码，清除之前可能保存的信息
-          Taro.removeStorageSync('savedCredentials');
-        }
-        
-        // 保存令牌和用户信息
-        setToken(token);
-        
-        // 保存用户信息（字段名可能因后端API而异）
-        setUserInfo({
-          id: userData.id || userData.userId || '',
-          username: userData.username || username,
-          nickname: userData.nickname || userData.name || username,
-          avatarUrl: userData.avatarUrl || userData.avatar || ''
-        });
-
-        Taro.showToast({
-          title: '登录成功',
-          icon: 'success',
-        });
-
-        // 登录成功后跳转到首页
-        setTimeout(() => {
-          Taro.switchTab({
-            url: '/pages/index/index',
+          console.error('登录响应中没有token:', response);
+          Taro.showToast({
+            title: '登录失败，请检查用户名和密码',
+            icon: 'none',
           });
-        }, 1500);
-      } else {
-        console.error('登录响应中没有找到token:', response);
-        Taro.showToast({
-          title: '登录失败，请检查用户名和密码',
-          icon: 'none',
-        });
+        }
       }
     } catch (error) {
       console.error('登录失败:', error);
+      
+      // 处理特定的错误消息
+      let errorMessage = '登录失败，请稍后再试';
+      if (error.status === 400) {
+        errorMessage = '用户名或密码错误';
+      } else if (error.status === 429) {
+        errorMessage = '登录尝试次数过多，请稍后再试';
+      }
+      
       Taro.showToast({
-        title: error.message || '登录失败，请稍后再试',
+        title: errorMessage,
         icon: 'none',
       });
     } finally {

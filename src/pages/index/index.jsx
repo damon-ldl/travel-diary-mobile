@@ -50,6 +50,11 @@ const Index = () => {
     try {
       setLoadError(false);
       
+      // 如果正在加载，直接返回
+      if (loading || refreshing) {
+        return;
+      }
+      
       // 如果刷新，重置页码
       const currentPage = refresh ? 1 : page;
       
@@ -180,22 +185,19 @@ const Index = () => {
         Taro.stopPullDownRefresh();
       }
     }
-  }, [page, pageSize, searchKeyword, calculateTotalPages]);
+  }, [page, pageSize, searchKeyword, loading, refreshing, calculateTotalPages]);
 
   // 页面加载时获取游记列表
   useEffect(() => {
-    if (isFirstLoad.current) {
-      fetchDiaries(true);
-      isFirstLoad.current = false;
-    }
-  }, [fetchDiaries]);
+    fetchDiaries(true);
+  }, []); // 移除 fetchDiaries 依赖，只在组件挂载时执行一次
 
   // 当搜索关键词改变时重新获取数据
   useEffect(() => {
-    if (!isFirstLoad.current) {
+    if (searchKeyword !== undefined) {
       fetchDiaries(true);
     }
-  }, [searchKeyword, fetchDiaries]);
+  }, [searchKeyword]); // 只依赖 searchKeyword
 
   // 下拉刷新
   usePullDownRefresh(() => {

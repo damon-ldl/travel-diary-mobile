@@ -67,13 +67,14 @@ export const AUTH_URLS = {
 
 // 游记相关接口
 export const POST_URLS = {
-  LIST: `${BASE_URL}/diaries`,
-  MY_DIARIES: `${BASE_URL}/diaries/my`,
-  DETAIL: (id) => `${BASE_URL}/diaries/${id}`,
-  CREATE: `${BASE_URL}/diaries`,
-  UPDATE: (id) => `${BASE_URL}/diaries/${id}`,
-  LIKE: (id) => `${BASE_URL}/diaries/${id}/like`,
-  COMMENT: (id) => `${BASE_URL}/diaries/${id}/comments`,
+  MY_POSTS: `${BASE_URL}/diaries/my`, // 获取我的游记列表
+  LIST: `${BASE_URL}/diaries`, // 获取游记列表
+  DETAIL: (id) => `${BASE_URL}/diaries/${id}`, // 获取游记详情
+  CREATE: `${BASE_URL}/diaries`, // 创建游记
+  UPDATE: (id) => `${BASE_URL}/diaries/${id}`, // 更新游记
+  DELETE: (id) => `${BASE_URL}/diaries/${id}`, // 删除游记
+  LIKE: (id) => `${BASE_URL}/diaries/${id}/like`, // 点赞/取消点赞
+  COMMENT: (id) => `${BASE_URL}/diaries/${id}/comments`, // 评论
 };
 
 // 资源URL前缀，用于图片等静态资源

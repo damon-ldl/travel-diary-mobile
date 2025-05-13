@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, Button } from '@tarojs/components';
+import { View, Text, ScrollView } from '@tarojs/components';
 import Taro, { usePullDownRefresh, navigateTo } from '@tarojs/taro';
 import { get, del, getUserInfo, isLoggedIn } from '../../utils/request';
 import { POST_URLS, RESOURCE_URL } from '../../constants/api';
@@ -32,6 +32,12 @@ const MyPosts = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0
+  });
+  const [hasMore, setHasMore] = useState(true);
 
   // 返回上一页
   const handleBack = () => {
@@ -50,6 +56,11 @@ const MyPosts = () => {
     try {
       if (refresh) {
         setRefreshing(true);
+        // 重置分页
+        setPagination(prev => ({
+          ...prev,
+          page: 1
+        }));
       } else {
         setLoading(true);
       }
@@ -71,12 +82,10 @@ const MyPosts = () => {
 
       console.log('正在获取用户游记列表...');
       // 请求我的游记列表，使用专门的我的游记接口
-      const res = await get(POST_URLS.MY_DIARIES);
+      const res = await get(`${POST_URLS.MY_POSTS}?page=${pagination.page}&pageSize=${pagination.pageSize}`);
       console.log('获取用户游记响应:', res);
 
       if (res && res.diaries) {
-        console.log('设置游记列表, 数量:', res.diaries.length);
-        
         // 处理返回的游记列表，添加完整的图片URL
         const processedDiaries = res.diaries.map(diary => ({
           ...diary,
@@ -84,16 +93,34 @@ const MyPosts = () => {
           coverImage: diary.coverImage ? getFullResourceUrl(diary.coverImage) : null
         }));
         
-        setPosts(processedDiaries);
+        // 更新分页信息
+        setPagination({
+          page: res.page,
+          pageSize: res.pageSize,
+          total: res.total
+        });
+
+        // 判断是否还有更多数据
+        setHasMore(res.total > res.page * res.pageSize);
+        
+        // 如果是刷新，直接替换数据
+        if (refresh) {
+          setPosts(processedDiaries);
+        } else {
+          // 否则追加数据
+          setPosts(prev => [...prev, ...processedDiaries]);
+        }
       } else {
         console.warn('返回的响应中没有diaries字段或为空');
+        if (refresh) {
+          setPosts([]);
+        }
       }
     } catch (error) {
-      console.error('获取游记列表失败:', error);
-      Taro.showToast({
-        title: '获取游记列表失败',
-        icon: 'none',
-      });
+      console.log('获取游记列表:', error);
+      if (refresh) {
+        setPosts([]);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -103,14 +130,24 @@ const MyPosts = () => {
         Taro.stopPullDownRefresh();
       }
     }
-  }, []);
+  }, [pagination.page, pagination.pageSize]);
+
+  // 加载更多
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      setPagination(prev => ({
+        ...prev,
+        page: prev.page + 1
+      }));
+    }
+  }, [loading, hasMore]);
 
   // 处理删除游记
   const handleDelete = useCallback(async (post) => {
     try {
       setLoading(true);
-      // 获取实际ID (可能是id或postId)
-      const actualId = post.postId || post.id;
+      // 获取实际ID
+      const actualId = post.id;
       
       // 调用删除接口
       await del(POST_URLS.DETAIL(actualId));
@@ -121,9 +158,11 @@ const MyPosts = () => {
       });
       
       // 从列表中移除已删除的游记
-      setPosts(prevPosts => prevPosts.filter(item => {
-        const itemId = item.postId || item.id;
-        return itemId !== actualId;
+      setPosts(prevPosts => prevPosts.filter(item => item.id !== actualId));
+      // 更新总数
+      setPagination(prev => ({
+        ...prev,
+        total: prev.total - 1
       }));
     } catch (error) {
       console.error('删除游记失败:', error);
@@ -138,13 +177,10 @@ const MyPosts = () => {
 
   // 处理编辑游记
   const handleEdit = useCallback((post) => {
-    // 获取实际ID (可能是id或postId)
-    const actualId = post.postId || post.id;
-    
     // 只有待审核或未通过的游记可以编辑
     if (post.status === 'pending' || post.status === 'rejected') {
       navigateTo({
-        url: `/pages/post/create?id=${actualId}`
+        url: `/pages/post/create?id=${post.id}`
       });
     } else {
       Taro.showToast({
@@ -173,7 +209,7 @@ const MyPosts = () => {
 
   // 统计不同状态的游记数量
   const statusCounts = {
-    total: posts.length,
+    total: pagination.total,
     pending: posts.filter(post => post.status === 'pending').length,
     approved: posts.filter(post => post.status === 'approved').length,
     rejected: posts.filter(post => post.status === 'rejected').length
@@ -214,11 +250,12 @@ const MyPosts = () => {
         className="post-list"
         scrollY
         enableBackToTop
+        onScrollToLower={loadMore}
       >
         {posts.length > 0 ? (
           posts.map(post => (
             <PostItem 
-              key={post.postId || post.id} 
+              key={post.id} 
               post={post} 
               onDelete={handleDelete}
               onEdit={handleEdit}
@@ -232,6 +269,10 @@ const MyPosts = () => {
         
         {loading && !refreshing && (
           <View className="loading">加载中...</View>
+        )}
+        
+        {!loading && !hasMore && posts.length > 0 && (
+          <View className="no-more">没有更多了</View>
         )}
       </ScrollView>
 
