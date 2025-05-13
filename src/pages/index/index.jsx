@@ -9,7 +9,6 @@ import './index.scss';
 const getFullResourceUrl = (url) => {
   if (!url) return '';
   
-  
   // 如果是完整URL则直接返回
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
@@ -17,6 +16,13 @@ const getFullResourceUrl = (url) => {
   
   // 确保url以/开头
   const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  
+  // 处理在使用相对路径API的情况
+  if (!RESOURCE_URL) {
+    // 如果RESOURCE_URL为空，说明我们使用的是相对路径
+    return normalizedUrl; // 直接返回相对路径
+  }
+  
   return `${RESOURCE_URL}${normalizedUrl}`;
 };
 

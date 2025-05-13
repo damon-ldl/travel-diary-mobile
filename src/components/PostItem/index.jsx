@@ -40,12 +40,23 @@ const PostItem = ({ post, onDelete, onEdit }) => {
   // 处理图片URL - 如果是相对路径，添加服务器基础URL
   const getFullImageUrl = (url) => {
     if (!url) return null;
+    
     // 如果已经是完整URL（以http开头），则不做处理
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
+    
+    // 确保url以/开头
+    const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+    
+    // 处理在使用相对路径API的情况
+    if (!RESOURCE_URL) {
+      // 如果RESOURCE_URL为空，说明我们使用的是相对路径
+      return normalizedUrl; // 直接返回相对路径
+    }
+    
     // 如果是以/开头的相对路径，添加RESOURCE_URL前缀
-    return `${RESOURCE_URL}${url}`;
+    return `${RESOURCE_URL}${normalizedUrl}`;
   };
 
   // 获取完整的封面图片URL

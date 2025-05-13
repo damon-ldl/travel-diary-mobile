@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
+import { View, Text, Image, ScrollView, Button, Video } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { getUserInfo, get } from '../../utils/request';
 import { POST_URLS, RESOURCE_URL } from '../../constants/api';
@@ -9,14 +9,34 @@ import './detail.scss';
 const getFullResourceUrl = (url) => {
   if (!url) return '';
   
+  console.log('处理图片URL:', url);
+  
   // 如果是完整URL则直接返回
   if (url.startsWith('http://') || url.startsWith('https://')) {
+    console.log('完整URL，直接返回:', url);
     return url;
   }
   
   // 确保url以/开头
   const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
-  return `${RESOURCE_URL}${normalizedUrl}`;
+  
+  // 如果URL以/uploads开头，使用特殊处理
+  if (normalizedUrl.startsWith('/uploads/')) {
+    // 在H5环境中，上传目录应该是相对于当前域的
+    console.log('检测到uploads路径，特殊处理:', normalizedUrl);
+    return normalizedUrl;
+  }
+  
+  // 处理在使用相对路径API的情况
+  if (!RESOURCE_URL) {
+    // 如果RESOURCE_URL为空，说明我们使用的是相对路径
+    console.log('RESOURCE_URL为空，使用相对路径:', normalizedUrl);
+    return normalizedUrl; // 直接返回相对路径
+  }
+  
+  const fullUrl = `${RESOURCE_URL}${normalizedUrl}`;
+  console.log('生成完整URL:', fullUrl);
+  return fullUrl;
 };
 
 const PostDetail = () => {
@@ -46,12 +66,16 @@ const PostDetail = () => {
         }
 
         // 调用真实API获取游记详情
+        console.log('获取游记详情, ID:', id);
         const response = await get(POST_URLS.DETAIL(id));
+        console.log('获取到游记详情:', response);
         
         if (response) {
           // 处理图片URL确保完整路径
           const processedImages = response.images ? 
             response.images.map(img => getFullResourceUrl(img)) : [];
+            
+          console.log('处理后的图片列表:', processedImages);
             
           // 将API返回的数据转换为组件需要的格式
           const formattedDetail = {
@@ -136,7 +160,7 @@ const PostDetail = () => {
     );
   }
 
-  const { title, content, author, createTime, images, status } = postDetail;
+  const { title, content, author, createTime, images, videoUrl, status } = postDetail;
 
   return (
     <ScrollView className="post-detail-container" scrollY>
@@ -157,24 +181,45 @@ const PostDetail = () => {
       <View className="post-content">
         <Text className="content-text">{content}</Text>
         
-        {images && images.length > 0 && (
-          <View className="image-list">
-            {images.map((image, index) => (
-              <Image
-                key={index}
-                src={image}
-                mode="widthFix"
-                className="content-image"
-                onClick={() => {
-                  Taro.previewImage({
-                    current: image,
-                    urls: images,
-                  });
-                }}
+        {/* 显示视频和图片 */}
+        <View className="media-content">
+          {/* 如果有视频，显示视频作为第一项 */}
+          {videoUrl && (
+            <View className="video-container">
+              <Video
+                src={videoUrl}
+                className="content-video"
+                showFullscreenBtn
+                showPlayBtn
+                controls
+                poster={images && images.length > 0 ? images[0] : ''}
+                id="diary-video"
               />
-            ))}
-          </View>
-        )}
+            </View>
+          )}
+          
+          {/* 显示图片列表 */}
+          {images && images.length > 0 && (
+            <View className="image-list">
+              {images.map((image, index) => (
+                <Image
+                  key={index}
+                  src={image}
+                  mode="widthFix"
+                  className="content-image"
+                  onClick={() => {
+                    Taro.previewImage({
+                      current: image,
+                      urls: images,
+                    });
+                  }}
+                  onError={(e) => {console.error('图片加载失败:', image, e)}}
+                  showMenuByLongpress
+                />
+              ))}
+            </View>
+          )}
+        </View>
       </View>
 
       <View className="post-actions">
