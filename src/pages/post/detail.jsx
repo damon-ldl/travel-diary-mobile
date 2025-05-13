@@ -17,21 +17,29 @@ const getFullResourceUrl = (url) => {
     return url;
   }
   
-  // 确保url以/开头
-  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  // 获取travel-diary-server与本文件的相对路径
+  const serverRelativePath = '../../..'; // 从当前文件到项目根目录，再到travel-diary-server
   
-  // 如果URL以/uploads开头，使用特殊处理
-  if (normalizedUrl.startsWith('/uploads/')) {
-    // 在H5环境中，上传目录应该是相对于当前域的
+  // 确保url格式正确
+  let normalizedUrl = url;
+  if (url.startsWith('./')) {
+    normalizedUrl = url.substring(2);
+  } else if (url.startsWith('/')) {
+    normalizedUrl = url.substring(1);
+  }
+  
+  // 如果URL以uploads开头，使用特殊处理
+  if (normalizedUrl.startsWith('uploads/') || normalizedUrl.startsWith('/uploads/')) {
     console.log('检测到uploads路径，特殊处理:', normalizedUrl);
-    return normalizedUrl;
+    const cleanPath = normalizedUrl.replace(/^\/+/, '');
+    return `${serverRelativePath}/${cleanPath}`;
   }
   
   // 处理在使用相对路径API的情况
   if (!RESOURCE_URL) {
-    // 如果RESOURCE_URL为空，说明我们使用的是相对路径
-    console.log('RESOURCE_URL为空，使用相对路径:', normalizedUrl);
-    return normalizedUrl; // 直接返回相对路径
+    // 如果RESOURCE_URL为空，使用服务器相对路径
+    console.log('RESOURCE_URL为空，使用服务器相对路径:', normalizedUrl);
+    return `${serverRelativePath}/${normalizedUrl}`;
   }
   
   const fullUrl = `${RESOURCE_URL}${normalizedUrl}`;
