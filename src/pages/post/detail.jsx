@@ -105,6 +105,7 @@ const PostDetail = () => {
           const currentUser = getUserInfo();
           if (currentUser && response.author.id === currentUser.id) {
             setIsOwner(true);
+          
           }
         }
         

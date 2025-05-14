@@ -137,7 +137,7 @@ const Register = () => {
           name: 'avatar',
           formData: params,
           header: {
-            'content-type': 'multipart/form-data'
+            //'content-type': 'multipart/form-data'
           }
         });
         
